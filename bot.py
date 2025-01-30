@@ -44,6 +44,7 @@ async def load_cogs():
     """Loads bot command cogs (separate command files)."""
     await bot.load_extension("cogs.basicCommands") 
     await bot.load_extension("cogs.music")  
+    await bot.load_extension("cogs.tts")
 
 async def main():
     """Main function to start the bot asynchronously."""

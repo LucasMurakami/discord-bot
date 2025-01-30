@@ -163,13 +163,12 @@ class Music(commands.Cog):
 
         guild_state = self.get_guild_state(ctx.guild.id)
 
-        if guild_state.voice_client:
-            if guild_state.voice_client.channel == ctx.author.voice.channel:
-                pass
-            else:
-                await guild_state.voice_client.move_to(ctx.author.voice.channel)
+        if ctx.voice_client and ctx.voice_client.is_connected():
+            guild_state.voice_client = ctx.voice_client
+            if ctx.voice_client.channel != ctx.author.voice.channel:
+                await ctx.voice_client.move_to(ctx.author.voice.channel) 
         else:
-            guild_state.voice_client = await ctx.author.voice.channel.connect()
+            guild_state.voice_client = await ctx.author.voice.channel.connect() 
 
         msg = await ctx.send("⏳ Processing...")
         info = await YTDLHelper.extract_info(url)
