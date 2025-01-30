@@ -1,6 +1,6 @@
-# Discord Music Bot
+# Discord Bot - TWAB
 
-A feature-rich Discord music bot built with Python, discord.py, and yt-dlp for seamless music playback and playlist management.
+A discord bot currently under development. The objective is to create a generic bot for music playing and to be an invaluable AI companion for D&D campaigns. Specifically, the TWAB-Project.
 
 ## Features
 
