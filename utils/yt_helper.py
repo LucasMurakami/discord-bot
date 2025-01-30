@@ -1,0 +1,63 @@
+from yt_dlp import YoutubeDL
+import asyncio
+import logging
+
+# Set up logging for debugging and error tracking
+logger = logging.getLogger(__name__)
+
+# Options for YoutubeDL to extract the best available audio
+YDL_OPTIONS = {
+    'format': 'bestaudio[ext=webm]/bestaudio/best', 
+    'noplaylist': True, 
+    'force-ipv4': True, 
+    'extractor_args': {
+        'youtube': {
+            'skip': ['hls', 'dash', 'translated_subs'],  
+            'player_skip': ['configs'],
+        }
+    },
+    'postprocessors': [{
+        'key': 'FFmpegExtractAudio', 
+        'preferredcodec': 'opus',  
+    }],
+    'socket_timeout': 15,  
+    'verbose': True  
+}
+
+class YTDLHelper:
+    """Helper class to extract audio stream URLs from YouTube using yt-dlp."""
+
+    @staticmethod
+    async def extract_info(url):
+        """
+        Extracts and processes audio information from a YouTube video URL.
+
+        Args:
+            url (str): The URL of the YouTube video.
+
+        Returns:
+            dict | None: A dictionary containing extracted info, or None if extraction fails.
+        """
+        try:
+            with YoutubeDL(YDL_OPTIONS) as ydl:
+                # Run extraction in a separate thread to avoid blocking the event loop
+                info = await asyncio.to_thread(
+                    ydl.extract_info, 
+                    url, 
+                    download=False,  
+                    process=False  
+                )
+                
+                # If the extracted info is a playlist, return None (not supported in this version)
+                if info.get('_type') == 'playlist':
+                    return None                    
+                
+                info = await asyncio.to_thread(ydl.process_info, info)                
+               
+                if not info or 'url' not in info:
+                    return None
+                    
+                return info
+        except Exception as e:
+            logging.error(f"YTDL Error: {str(e)}") 
+            return None
