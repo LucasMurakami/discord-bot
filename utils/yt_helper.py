@@ -44,20 +44,21 @@ class YTDLHelper:
                 info = await asyncio.to_thread(
                     ydl.extract_info, 
                     url, 
-                    download=False,  
-                    process=False  
+                    download=False  
                 )
+                
+                logger.debug(f"Extracted Info: {info}")
                 
                 # If the extracted info is a playlist, return None (not supported in this version)
                 if info.get('_type') == 'playlist':
+                    logger.warning("Playlists are not supported.")
                     return None                    
                 
-                info = await asyncio.to_thread(ydl.process_info, info)                
-               
                 if not info or 'url' not in info:
+                    logger.error("No valid URL found in extracted info.")
                     return None
                     
                 return info
         except Exception as e:
-            logging.error(f"YTDL Error: {str(e)}") 
+            logger.error(f"YTDL Error: {str(e)}", exc_info=True) 
             return None

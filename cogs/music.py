@@ -56,6 +56,17 @@ class GuildMusicState:
         self.repeat_song = None
         self.original_playlist = []
 
+    def toggle_repeat(self):
+        """
+        Toggles the repeat mode between 'off' and 'on'.
+        """
+        if self.repeat_mode == 'off':
+            self.repeat_mode = 'on'
+            self.repeat_song = self.current.copy() if self.current else None
+        else:
+            self.repeat_mode = 'off'
+            self.repeat_song = None
+
     def cleanup(self):
         """
         Stops playback, clears the queue, and disconnects the bot when no more songs are available.
@@ -151,10 +162,14 @@ class Music(commands.Cog):
             return await ctx.send("You must be in a voice channel to use this command!")
 
         guild_state = self.get_guild_state(ctx.guild.id)
-        if not guild_state.voice_client:
+
+        if guild_state.voice_client:
+            if guild_state.voice_client.channel == ctx.author.voice.channel:
+                pass
+            else:
+                await guild_state.voice_client.move_to(ctx.author.voice.channel)
+        else:
             guild_state.voice_client = await ctx.author.voice.channel.connect()
-        elif guild_state.voice_client.channel != ctx.author.voice.channel:
-            await guild_state.voice_client.move_to(ctx.author.voice.channel)
 
         msg = await ctx.send("⏳ Processing...")
         info = await YTDLHelper.extract_info(url)
@@ -219,6 +234,35 @@ class Music(commands.Cog):
             embed.add_field(name=f"Upcoming Songs ({len(guild_state.queue)} total)", value=queue_list, inline=False)
         
         await ctx.send(embed=embed)
+
+    def get_guild_state(self, guild_id):
+        """
+        Retrieves the music state for a guild, creating one if it doesn't exist.
+
+        Args:
+            guild_id (int): The ID of the Discord guild.
+
+        Returns:
+            GuildMusicState: The music state object for the guild.
+        """
+        if guild_id not in self.guild_states:
+            self.guild_states[guild_id] = GuildMusicState()
+        return self.guild_states[guild_id]
+
+    @commands.command()
+    async def repeat(self, ctx):
+        """
+        Toggles repeat mode for the current song.
+
+        When repeat mode is on, the current song will replay indefinitely.
+        """
+        guild_state = self.get_guild_state(ctx.guild.id)
+        guild_state.toggle_repeat()
+
+        if guild_state.repeat_mode == 'on':
+            await ctx.send("🔂 Repeat mode is now **on**. The current song will repeat.")
+        else:
+            await ctx.send("🔂 Repeat mode is now **off**.")
 
 async def setup(bot):
     """Registers the music cog with the bot."""
