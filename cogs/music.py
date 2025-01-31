@@ -17,38 +17,39 @@ valid_formats = (
     'aac', 'flac'
 )
 
+"""
+Initializes a song object.
+
+Args:
+    url (str): The direct audio URL of the song.
+    title (str): The title of the song.
+    requester (str): The name of the user who requested the song.
+"""
 class Song:
     def __init__(self, url, title, requester):
-        """
-        Initializes a song object.
-
-        Args:
-            url (str): The direct audio URL of the song.
-            title (str): The title of the song.
-            requester (str): The name of the user who requested the song.
-        """
+       
         self.url = url
         self.title = title
         self.requester = requester
         
-    def copy(self):
-        """Returns a copy of the song object."""
+    """Returns a copy of the song object."""
+    def copy(self):        
         return Song(self.url, self.title, self.requester)
 
 
-class GuildMusicState:
-    def __init__(self):
-        """
-        Initializes the music state for a Discord guild.
+"""
+Initializes the music state for a Discord guild.
 
-        Attributes:
-            queue (list): A list of songs waiting to be played.
-            current (Song | None): The currently playing song.
-            voice_client (discord.VoiceClient | None): The voice connection for the guild.
-            repeat_mode (str): The repeat mode setting ('off' or 'on').
-            repeat_song (Song | None): The song to repeat when repeat mode is enabled.
-            original_playlist (list): Stores the original order of songs in case shuffle or repeat is applied.
-        """
+Attributes:
+    queue (list): A list of songs waiting to be played.
+    current (Song | None): The currently playing song.
+    voice_client (discord.VoiceClient | None): The voice connection for the guild.
+    repeat_mode (str): The repeat mode setting ('off' or 'on').
+    repeat_song (Song | None): The song to repeat when repeat mode is enabled.
+    original_playlist (list): Stores the original order of songs in case shuffle or repeat is applied.
+"""
+class GuildMusicState:
+    def __init__(self):        
         self.queue = []
         self.current = None
         self.voice_client = None
@@ -56,10 +57,10 @@ class GuildMusicState:
         self.repeat_song = None
         self.original_playlist = []
 
-    def toggle_repeat(self):
-        """
+    """
         Toggles the repeat mode between 'off' and 'on'.
-        """
+    """
+    def toggle_repeat(self):        
         if self.repeat_mode == 'off':
             self.repeat_mode = 'on'
             self.repeat_song = self.current.copy() if self.current else None
@@ -67,12 +68,12 @@ class GuildMusicState:
             self.repeat_mode = 'off'
             self.repeat_song = None
 
-    def cleanup(self):
-        """
+    """
         Stops playback, clears the queue, and disconnects the bot when no more songs are available.
 
         This method is called when the queue is empty or an error occurs during playback.
-        """
+    """
+    def cleanup(self):        
         self.queue.clear()
         self.current = None
         self.repeat_song = None
@@ -80,14 +81,16 @@ class GuildMusicState:
             asyncio.run_coroutine_threadsafe(self.voice_client.disconnect(), self.voice_client.loop)
             self.voice_client = None
 
-    def check_queue(self, ctx, error):
-        """
+
+    """
         Handles playback continuation when a song finishes or encounters an error.
 
         Args:
             ctx (commands.Context): The context of the command.
             error (Exception | None): The error encountered during playback, if any.
-        """
+    """
+    def check_queue(self, ctx, error):
+        
         if error:
             print(f"Playback error: {error}")
             self.cleanup()
@@ -122,19 +125,18 @@ class GuildMusicState:
             self.cleanup()
 
 
+"""
+Initializes the music cog.
+Args:
+    bot (commands.Bot): The Discord bot instance.
+"""
 class Music(commands.Cog):
     def __init__(self, bot):
-        """
-        Initializes the music cog.
-
-        Args:
-            bot (commands.Bot): The Discord bot instance.
-        """
+        
         self.bot = bot
         self.guild_states = {}
 
-    def get_guild_state(self, guild_id):
-        """
+    """
         Retrieves the music state for a guild, creating one if it doesn't exist.
 
         Args:
@@ -142,14 +144,15 @@ class Music(commands.Cog):
 
         Returns:
             GuildMusicState: The music state object for the guild.
-        """
+    """
+    def get_guild_state(self, guild_id):
+        
         if guild_id not in self.guild_states:
             self.guild_states[guild_id] = GuildMusicState()
         return self.guild_states[guild_id]
 
-    @commands.command()
-    async def play(self, ctx, *, url):
-        """
+
+    """
         Plays a song from the given URL or adds it to the queue if a song is already playing.
 
         Args:
@@ -157,7 +160,10 @@ class Music(commands.Cog):
             url (str): The URL of the song to play.
 
         If a song is already playing, the new song is added to the queue.
-        """
+    """
+    @commands.command()
+    async def play(self, ctx, *, url):
+        
         if not ctx.author.voice:
             return await ctx.send("You must be in a voice channel to use this command!")
 
@@ -211,17 +217,19 @@ class Music(commands.Cog):
         else:
             await msg.edit(content=f"✅ Added {added_songs} songs to queue")
 
+
+    """Skips the currently playing song."""
     @commands.command()
-    async def skip(self, ctx):
-        """Skips the currently playing song."""
+    async def skip(self, ctx):        
         guild_state = self.get_guild_state(ctx.guild.id)
         if guild_state.voice_client:
             guild_state.voice_client.stop()
             await ctx.send("⏭ Skipped current song")
 
+
+    """Displays the current queue of songs."""
     @commands.command()
-    async def queue(self, ctx):
-        """Displays the current queue of songs."""
+    async def queue(self, ctx):        
         guild_state = self.get_guild_state(ctx.guild.id)
         embed = discord.Embed(title="Music Queue", color=0x00ff00)
 
@@ -234,8 +242,8 @@ class Music(commands.Cog):
         
         await ctx.send(embed=embed)
 
-    def get_guild_state(self, guild_id):
-        """
+
+    """
         Retrieves the music state for a guild, creating one if it doesn't exist.
 
         Args:
@@ -243,18 +251,20 @@ class Music(commands.Cog):
 
         Returns:
             GuildMusicState: The music state object for the guild.
-        """
+    """
+    def get_guild_state(self, guild_id):        
         if guild_id not in self.guild_states:
             self.guild_states[guild_id] = GuildMusicState()
         return self.guild_states[guild_id]
 
-    @commands.command()
-    async def repeat(self, ctx):
-        """
+
+    """
         Toggles repeat mode for the current song.
 
         When repeat mode is on, the current song will replay indefinitely.
-        """
+    """
+    @commands.command()
+    async def repeat(self, ctx):        
         guild_state = self.get_guild_state(ctx.guild.id)
         guild_state.toggle_repeat()
 
@@ -263,6 +273,7 @@ class Music(commands.Cog):
         else:
             await ctx.send("🔂 Repeat mode is now **off**.")
 
-async def setup(bot):
-    """Registers the music cog with the bot."""
+
+"""Registers the music cog with the bot."""
+async def setup(bot):    
     await bot.add_cog(Music(bot))

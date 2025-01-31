@@ -24,12 +24,10 @@ YDL_OPTIONS = {
     'verbose': True  
 }
 
+"""Helper class to extract audio stream URLs from YouTube using yt-dlp."""
 class YTDLHelper:
-    """Helper class to extract audio stream URLs from YouTube using yt-dlp."""
-
-    @staticmethod
-    async def extract_info(url):
-        """
+    
+    """
         Extracts and processes audio information from a YouTube video URL.
 
         Args:
@@ -37,7 +35,9 @@ class YTDLHelper:
 
         Returns:
             dict | None: A dictionary containing extracted info, or None if extraction fails.
-        """
+    """
+    @staticmethod
+    async def extract_info(url):        
         try:
             with YoutubeDL(YDL_OPTIONS) as ydl:
                 # Run extraction in a separate thread to avoid blocking the event loop

@@ -2,17 +2,18 @@ import discord
 from gtts import gTTS
 import os
 import tempfile
+import asyncio
 from pydub import AudioSegment
 from discord import FFmpegPCMAudio
 from discord.ext import commands
 
-class TTS(commands.Cog):
-    def __init__(self, bot):
-        self.bot = bot  
+class TTSService():
+    def __init__(self):
         self.temp_files = []
 
+    """Generate speech audio from text and return file path."""
     async def generate_speech(self, text: str, lang: str = 'en') -> str:
-        """Generate speech audio from text and return file path."""
+        
         try:
             # Generate speech with gTTS
             tts = gTTS(text=text, lang=lang, slow=False)
@@ -36,8 +37,10 @@ class TTS(commands.Cog):
             print(f"TTS Error: {str(e)}")
             return None
 
+    
+    """Clean up temporary files"""
     def cleanup(self):
-        """Clean up temporary files"""
+        
         for file in self.temp_files:
             try:
                 if os.path.exists(file):
@@ -46,9 +49,10 @@ class TTS(commands.Cog):
                 pass
         self.temp_files = []
 
-    @commands.command()
-    async def speak(self, ctx, *, text):
-        """Convert text to speech and play it"""
+
+    """Convert text to speech and play it"""
+    async def speak(self, ctx, *, text: str):
+        
         if not ctx.author.voice:
             return await ctx.send("You must be in a voice channel!")
 
@@ -65,6 +69,9 @@ class TTS(commands.Cog):
         if not wav_path:
             return await ctx.send("❌ Failed to generate speech")
 
+        while ctx.voice_client.is_playing():
+            await asyncio.sleep(1)
+
         # Play audio
         source = FFmpegPCMAudio(wav_path)
         ctx.voice_client.play(
@@ -72,8 +79,4 @@ class TTS(commands.Cog):
             after=lambda e: self.cleanup() if e else None
         )
 
-        await ctx.send(f"🔊 Speaking: {text[:200]}")
-
-async def setup(bot):
-    """Registers the TTS cog with the bot."""
-    await bot.add_cog(TTS(bot))
+        await ctx.send(f"🔊 **Speaking**: {text}")
